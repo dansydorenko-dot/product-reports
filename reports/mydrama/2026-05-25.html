@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>mydrama · Approval Rate · Full Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<style>
+  :root {
+    --bg:#f5f1e8; --surface:#fbf8f1; --ink:#1a1a1a; --ink-soft:#4a4a4a;
+    --ink-muted:#8a8a8a; --rule:#d8d0bf; --rule-soft:#ece5d6;
+    --accent-light:#e8a888; --accent-dark:#c97b4f; --line:#1f4e5f;
+    --extra-1:#6b8f71; --extra-2:#7a6a8a; --extra-3:#4a7fa5;
+    --extra-4:#b5734a; --extra-5:#a0926e;
+    --green-bg:#d6e8d8; --green-ink:#2d6b35;
+    --red-bg:#f0d8d4;   --red-ink:#8b2e24;
+    --sage-bg:#e2ebe3;  --sage-ink:#3d6b45;
+    --umber-bg:#ecddd4; --umber-ink:#7a4a30;
+    --neutral-bg:#ece5d6; --neutral-ink:#6a6050;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);}
+  body{font-family:"IBM Plex Sans",system-ui,sans-serif;color:var(--ink);min-height:100vh;padding:24px 40px 40px;-webkit-font-smoothing:antialiased;}
+  .container{max-width:1500px;margin:0 auto;}
+
+  /* Page header */
+  .page-header{border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);padding:12px 0;display:flex;justify-content:space-between;align-items:baseline;gap:24px;flex-wrap:wrap;margin-bottom:48px;}
+  .page-header .product{font-family:"Fraunces",serif;font-weight:500;font-size:20px;letter-spacing:-0.01em;}
+  .page-header .subtitle{font-family:"Fraunces",serif;font-weight:400;font-style:italic;font-size:15px;color:var(--ink-soft);margin-left:12px;}
+  .page-header .right{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--ink-muted);letter-spacing:0.08em;text-transform:uppercase;}
+
+  /* Payment method separator */
+  .pm-separator{border-top:2px solid var(--ink);margin:56px 0 40px;padding-top:14px;display:flex;align-items:baseline;gap:16px;}
+  .pm-separator .pm-name{font-family:"Fraunces",serif;font-weight:500;font-size:18px;color:var(--ink);}
+  .pm-separator .pm-sub{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--ink-muted);letter-spacing:0.1em;text-transform:uppercase;}
+
+  /* Section */
+  .report-section{margin-bottom:56px;}
+  .report-section:last-of-type{margin-bottom:0;}
+  .section-header{border-top:1px solid var(--ink);border-bottom:1px solid var(--rule);padding:8px 0;display:flex;justify-content:space-between;align-items:baseline;gap:24px;}
+  .section-header .title{font-family:"Fraunces",serif;font-weight:400;font-style:italic;font-size:15px;color:var(--ink-soft);}
+  .section-header .meta{display:flex;gap:18px;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-soft);align-items:baseline;}
+  .section-header .meta .label{color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:9px;margin-right:4px;}
+
+  /* Region blocks */
+  .region-block{margin-top:32px;}
+  .region-block:first-child{margin-top:0;}
+  .region-header{border-bottom:1px solid var(--rule-soft);padding:6px 0;display:flex;justify-content:space-between;align-items:baseline;}
+  .region-header .region-label{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-muted);}
+
+  /* Legends */
+  .legend,.section-legend{display:flex;gap:26px;padding:10px 0;border-bottom:1px solid var(--rule);font-size:11px;color:var(--ink-soft);letter-spacing:0.06em;text-transform:uppercase;font-weight:500;}
+  .legend-item{display:flex;align-items:center;gap:9px;}
+  .swatch{width:14px;height:12px;border:1px solid;}
+  .swatch.total{background:var(--accent-light);border-color:var(--accent-dark);}
+  .swatch.approved{background:var(--accent-dark);border-color:var(--accent-dark);}
+  .swatch-line{width:18px;height:0;border-top:2px solid var(--line);position:relative;}
+  .swatch-line::after{content:"";position:absolute;width:6px;height:6px;background:var(--line);border-radius:50%;top:-4px;left:50%;transform:translateX(-50%);}
+  .swatch-sq{width:12px;height:12px;border-radius:1px;}
+
+  /* Pattern A chart */
+  .chart-wrap{width:100%;height:720px;background:var(--surface);border:1px solid var(--rule);border-top:none;}
+
+  /* Pattern E — two-column share+AR */
+  .chart-row{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--rule);border-top:none;background:var(--surface);}
+  .chart-col{position:relative;}
+  .chart-col+.chart-col{border-left:1px solid var(--rule-soft);}
+  .col-label{font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-muted);padding:8px 16px 0;}
+  .chart-wrap-half{width:100%;height:320px;}
+
+  /* Pattern F — tables */
+  .table-wrap{width:100%;background:var(--surface);border:1px solid var(--rule);border-top:none;overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;}
+
+  /* Pattern F — bank heatmap thead */
+  thead tr.row-weeks th{font-family:"JetBrains Mono",monospace;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-soft);padding:9px 12px 4px;text-align:center;border-bottom:none;}
+  thead tr.row-weeks th.th-bank{text-align:left;border-right:1px solid var(--rule-soft);}
+  thead tr.row-weeks th.th-week-group{border-left:1px solid var(--rule-soft);}
+  thead tr.row-sub th{font-family:"JetBrains Mono",monospace;font-size:9px;font-weight:400;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);padding:2px 8px 8px;text-align:right;border-bottom:1px solid var(--rule);}
+  thead tr.row-sub th.th-bank-sub{text-align:left;padding-left:12px;border-right:1px solid var(--rule-soft);}
+  thead tr.row-sub th.th-txns{border-left:1px solid var(--rule-soft);}
+
+  /* Pattern F — WoW table thead */
+  thead tr.row-groups th{font-family:"JetBrains Mono",monospace;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-soft);padding:9px 12px 4px;text-align:center;border-bottom:none;}
+  thead tr.row-groups th.th-bank{text-align:left;border-right:1px solid var(--rule-soft);}
+  thead tr.row-groups th.th-group{border-left:1px solid var(--rule-soft);}
+  thead tr.row-groups-sub th{font-family:"JetBrains Mono",monospace;font-size:9px;font-weight:400;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);padding:2px 8px 8px;text-align:right;border-bottom:1px solid var(--rule);}
+  thead tr.row-groups-sub th.th-bank-sub{text-align:left;padding-left:12px;border-right:1px solid var(--rule-soft);}
+  thead tr.row-groups-sub th.th-first-sub{border-left:1px solid var(--rule-soft);}
+
+  /* Table body common */
+  tbody tr{border-bottom:1px solid var(--rule-soft);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover td{background:rgba(0,0,0,0.012)!important;}
+  td{padding:8px 8px;font-family:"JetBrains Mono",monospace;font-size:11px;text-align:right;white-space:nowrap;vertical-align:middle;}
+  td.td-bank{text-align:left;padding:8px 12px;font-family:"IBM Plex Sans",sans-serif;font-size:12px;color:var(--ink-soft);border-right:1px solid var(--rule-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;}
+  td.td-bank .rank{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--ink-muted);margin-right:8px;}
+  td.td-txns{color:var(--ink-soft);border-left:1px solid var(--rule-soft);}
+  td.td-ar{color:var(--ink);font-weight:500;font-size:12px;}
+  td.td-ar.cell-green{background:var(--green-bg);color:var(--green-ink);}
+  td.td-ar.cell-red{background:var(--red-bg);color:var(--red-ink);}
+  td.td-share-val{color:var(--ink-muted);}
+  td.td-first{border-left:1px solid var(--rule-soft);}
+  td.td-growth-abs{color:var(--ink-soft);}
+  td.td-growth-pct{font-weight:500;}
+  td.td-growth-pct.pos{color:var(--green-ink);}
+  td.td-growth-pct.neg{color:var(--red-ink);}
+  td.td-ar-delta{font-weight:500;font-size:12px;}
+  td.td-ar-delta.pos{color:var(--green-ink);}
+  td.td-ar-delta.neg{color:var(--red-ink);}
+  td.td-ar-delta.neutral{color:var(--ink-muted);}
+  td.td-segment{text-align:left;padding:6px 12px;}
+  .tag{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:0.05em;text-transform:uppercase;padding:3px 7px;border-radius:2px;white-space:nowrap;}
+  .tag-gi{background:var(--green-bg);color:var(--green-ink);}
+  .tag-gd{background:var(--red-bg);color:var(--red-ink);}
+  .tag-gs{background:var(--sage-bg);color:var(--sage-ink);}
+  .tag-si{background:var(--umber-bg);color:var(--umber-ink);}
+  .tag-sd,.tag-ss{background:var(--neutral-bg);color:var(--neutral-ink);}
+  .seg-tag{font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;padding:3px 8px;border-radius:2px;}
+
+  /* Footer */
+  footer{margin-top:32px;padding-top:12px;border-top:1px solid var(--rule);display:flex;justify-content:space-between;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--ink-muted);letter-spacing:0.08em;text-transform:uppercase;}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- PAGE HEADER -->
+<header class="page-header">
+  <div>
+    <span class="product" id="hdr-product">mydrama</span>
+    <span class="subtitle">Approval Rate</span>
+  </div>
+  <div class="right" id="hdr-channel">card · prod</div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════ CARDS -->
+<div class="pm-separator"><span class="pm-name">Cards</span><span class="pm-sub">payment_method = card</span></div>
+
+<!-- S01 Cards · Orders · Weekly -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-ow">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch total"></span>Total orders</div><div class="legend-item"><span class="swatch approved"></span>Approved orders</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div id="chart-ow" class="chart-wrap"></div>
+</section>
+
+<!-- S02 Cards · Orders · Monthly -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate · Monthly</span><div class="meta"><div><span class="label">Period</span><span id="p-om">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch total"></span>Total orders</div><div class="legend-item"><span class="swatch approved"></span>Approved orders</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div id="chart-om" class="chart-wrap"></div>
+</section>
+
+<!-- S03 Cards · Users · Weekly -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate (Users) · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-uw">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch total"></span>Total users</div><div class="legend-item"><span class="swatch approved"></span>Approved users</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div id="chart-uw" class="chart-wrap"></div>
+</section>
+
+<!-- S04 Cards · Users · Monthly -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate (Users) · Monthly</span><div class="meta"><div><span class="label">Period</span><span id="p-um">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch total"></span>Total users</div><div class="legend-item"><span class="swatch approved"></span>Approved users</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div id="chart-um" class="chart-wrap"></div>
+</section>
+
+<!-- S05 Cards · Orders by Region · Weekly -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate by Region · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-orw">—</span></div></div></div>
+  <div class="section-legend"><div class="legend-item"><span class="swatch total"></span>Total orders</div><div class="legend-item"><span class="swatch approved"></span>Approved orders</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div id="chart-orw-USA" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div id="chart-orw-EU" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div id="chart-orw-UK_CA_OCE" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div id="chart-orw-LATAM" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div id="chart-orw-Other" class="chart-wrap"></div></div>
+</section>
+
+<!-- S06 Cards · Orders by Region · Monthly -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate by Region · Monthly</span><div class="meta"><div><span class="label">Period</span><span id="p-orm">—</span></div></div></div>
+  <div class="section-legend"><div class="legend-item"><span class="swatch total"></span>Total orders</div><div class="legend-item"><span class="swatch approved"></span>Approved orders</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div id="chart-orm-USA" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div id="chart-orm-EU" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div id="chart-orm-UK_CA_OCE" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div id="chart-orm-LATAM" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div id="chart-orm-Other" class="chart-wrap"></div></div>
+</section>
+
+<!-- S07 Cards · Users by Region · Weekly -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate (Users) by Region · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-urw">—</span></div></div></div>
+  <div class="section-legend"><div class="legend-item"><span class="swatch total"></span>Total users</div><div class="legend-item"><span class="swatch approved"></span>Approved users</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div id="chart-urw-USA" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div id="chart-urw-EU" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div id="chart-urw-UK_CA_OCE" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div id="chart-urw-LATAM" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div id="chart-urw-Other" class="chart-wrap"></div></div>
+</section>
+
+<!-- S08 Cards · Users by Region · Monthly -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate (Users) by Region · Monthly</span><div class="meta"><div><span class="label">Period</span><span id="p-urm">—</span></div></div></div>
+  <div class="section-legend"><div class="legend-item"><span class="swatch total"></span>Total users</div><div class="legend-item"><span class="swatch approved"></span>Approved users</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div id="chart-urm-USA" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div id="chart-urm-EU" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div id="chart-urm-UK_CA_OCE" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div id="chart-urm-LATAM" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div id="chart-urm-Other" class="chart-wrap"></div></div>
+</section>
+
+<!-- S09 Cards · Brand AR by Region (Pattern A) -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Card Brand · Approval Rate by Region · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-brand-ar">—</span></div></div></div>
+  <div class="section-legend"><div class="legend-item"><span class="swatch total"></span>Total txns</div><div class="legend-item"><span class="swatch approved"></span>Approved txns</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div id="chart-brand-ar-USA" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div id="chart-brand-ar-EU" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div id="chart-brand-ar-UK_CA_OCE" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div id="chart-brand-ar-LATAM" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div id="chart-brand-ar-Other" class="chart-wrap"></div></div>
+</section>
+
+<!-- S10 Cards · Brand Share (Pattern E) -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Card Brand · Share &amp; AR Trend by Region · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-brand-share">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch-sq" style="background:#1f4e5f"></span>Visa</div><div class="legend-item"><span class="swatch-sq" style="background:#6b8f71"></span>Mastercard</div><div class="legend-item"><span class="swatch-sq" style="background:#a0926e"></span>Amex</div><div class="legend-item"><span class="swatch-sq" style="background:#7a6a8a"></span>Discover</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div class="chart-row"><div class="chart-col"><div class="col-label">Share in region %</div><div id="chart-brand-share-USA" class="chart-wrap-half"></div></div><div class="chart-col"><div class="col-label">Approval rate %</div><div id="chart-brand-ar2-USA" class="chart-wrap-half"></div></div></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div class="chart-row"><div class="chart-col"><div class="col-label">Share in region %</div><div id="chart-brand-share-EU" class="chart-wrap-half"></div></div><div class="chart-col"><div class="col-label">Approval rate %</div><div id="chart-brand-ar2-EU" class="chart-wrap-half"></div></div></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div class="chart-row"><div class="chart-col"><div class="col-label">Share in region %</div><div id="chart-brand-share-UK_CA_OCE" class="chart-wrap-half"></div></div><div class="chart-col"><div class="col-label">Approval rate %</div><div id="chart-brand-ar2-UK_CA_OCE" class="chart-wrap-half"></div></div></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div class="chart-row"><div class="chart-col"><div class="col-label">Share in region %</div><div id="chart-brand-share-LATAM" class="chart-wrap-half"></div></div><div class="chart-col"><div class="col-label">Approval rate %</div><div id="chart-brand-ar2-LATAM" class="chart-wrap-half"></div></div></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div class="chart-row"><div class="chart-col"><div class="col-label">Share in region %</div><div id="chart-brand-share-Other" class="chart-wrap-half"></div></div><div class="chart-col"><div class="col-label">Approval rate %</div><div id="chart-brand-ar2-Other" class="chart-wrap-half"></div></div></div></div>
+</section>
+
+<!-- S11 Cards · Type AR by Region (Pattern A) -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Card Type · Approval Rate by Region · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-type-ar">—</span></div></div></div>
+  <div class="section-legend"><div class="legend-item"><span class="swatch total"></span>Total txns</div><div class="legend-item"><span class="swatch approved"></span>Approved txns</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div id="chart-type-ar-USA" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div id="chart-type-ar-EU" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div id="chart-type-ar-UK_CA_OCE" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div id="chart-type-ar-LATAM" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div id="chart-type-ar-Other" class="chart-wrap"></div></div>
+</section>
+
+<!-- S12 Cards · Type Share (Pattern E) -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Card Type · Share &amp; AR Trend by Region · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-type-share">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch-sq" style="background:#1f4e5f"></span>Debit</div><div class="legend-item"><span class="swatch-sq" style="background:#6b8f71"></span>Credit</div><div class="legend-item"><span class="swatch-sq" style="background:#a0926e"></span>Prepaid</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div class="chart-row"><div class="chart-col"><div class="col-label">Share in region %</div><div id="chart-type-share-USA" class="chart-wrap-half"></div></div><div class="chart-col"><div class="col-label">Approval rate %</div><div id="chart-type-ar2-USA" class="chart-wrap-half"></div></div></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div class="chart-row"><div class="chart-col"><div class="col-label">Share in region %</div><div id="chart-type-share-EU" class="chart-wrap-half"></div></div><div class="chart-col"><div class="col-label">Approval rate %</div><div id="chart-type-ar2-EU" class="chart-wrap-half"></div></div></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div class="chart-row"><div class="chart-col"><div class="col-label">Share in region %</div><div id="chart-type-share-UK_CA_OCE" class="chart-wrap-half"></div></div><div class="chart-col"><div class="col-label">Approval rate %</div><div id="chart-type-ar2-UK_CA_OCE" class="chart-wrap-half"></div></div></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div class="chart-row"><div class="chart-col"><div class="col-label">Share in region %</div><div id="chart-type-share-LATAM" class="chart-wrap-half"></div></div><div class="chart-col"><div class="col-label">Approval rate %</div><div id="chart-type-ar2-LATAM" class="chart-wrap-half"></div></div></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div class="chart-row"><div class="chart-col"><div class="col-label">Share in region %</div><div id="chart-type-share-Other" class="chart-wrap-half"></div></div><div class="chart-col"><div class="col-label">Approval rate %</div><div id="chart-type-ar2-Other" class="chart-wrap-half"></div></div></div></div>
+</section>
+
+<!-- S13 Cards · Banks Top-15 (Pattern F) -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Top-15 Issuer Banks · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-banks">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch-sq" style="background:var(--green-bg);border:1px solid var(--green-ink)"></span>AR ≥ +5pp WoW</div><div class="legend-item"><span class="swatch-sq" style="background:var(--red-bg);border:1px solid var(--red-ink)"></span>AR ≤ −5pp WoW</div></div>
+  <div class="table-wrap"><table><thead><tr class="row-weeks" id="thead-banks-weeks"></tr><tr class="row-sub" id="thead-banks-sub"></tr></thead><tbody id="tbody-banks"></tbody></table></div>
+</section>
+
+<!-- S14 Cards · Banks WoW Growth (Pattern F WoW) -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Bank WoW Growth · Cards</span><div class="meta"><div><span class="label">Scope</span><span>USA · top-20 by pct growth</span></div></div></div>
+  <div class="legend" style="flex-wrap:wrap;gap:12px;"><span class="seg-tag tag-gi">↑ growing · improving</span><span class="seg-tag tag-gd">↑ growing · declining</span><span class="seg-tag tag-gs">↑ growing · stable</span><span class="seg-tag tag-si">↓ shrinking · improving</span><span class="seg-tag tag-sd">↓ shrinking · declining</span><span class="seg-tag tag-ss">↓ shrinking · stable</span></div>
+  <div class="table-wrap"><table><thead><tr class="row-groups"><th class="th-bank">Issuer Bank</th><th class="th-group" colspan="2">Prev Week</th><th class="th-group" colspan="2">Last Week</th><th class="th-group" colspan="2">Growth</th><th class="th-group" colspan="2">AR Delta</th><th class="th-group">Segment</th></tr><tr class="row-groups-sub"><th class="th-bank-sub"></th><th class="th-first-sub">Txns</th><th>AR%</th><th class="th-first-sub">Txns</th><th>AR%</th><th class="th-first-sub">Abs</th><th>Pct%</th><th class="th-first-sub">pp</th><th>direction</th><th class="th-first-sub"></th></tr></thead><tbody id="tbody-banks-wow"></tbody></table></div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ APPLE PAY -->
+<div class="pm-separator"><span class="pm-name">Apple Pay</span><span class="pm-sub">payment_method = apple_pay</span></div>
+
+<!-- S15-18: Apple Pay General AR (same structure as S01-04) -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-ap-ow">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch total"></span>Total orders</div><div class="legend-item"><span class="swatch approved"></span>Approved orders</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div id="chart-ap-ow" class="chart-wrap"></div>
+</section>
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate · Monthly</span><div class="meta"><div><span class="label">Period</span><span id="p-ap-om">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch total"></span>Total orders</div><div class="legend-item"><span class="swatch approved"></span>Approved orders</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div id="chart-ap-om" class="chart-wrap"></div>
+</section>
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate (Users) · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-ap-uw">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch total"></span>Total users</div><div class="legend-item"><span class="swatch approved"></span>Approved users</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div id="chart-ap-uw" class="chart-wrap"></div>
+</section>
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate (Users) · Monthly</span><div class="meta"><div><span class="label">Period</span><span id="p-ap-um">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch total"></span>Total users</div><div class="legend-item"><span class="swatch approved"></span>Approved users</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div id="chart-ap-um" class="chart-wrap"></div>
+</section>
+
+<!-- S19-22: Apple Pay by Region -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate by Region · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-ap-orw">—</span></div></div></div>
+  <div class="section-legend"><div class="legend-item"><span class="swatch total"></span>Total orders</div><div class="legend-item"><span class="swatch approved"></span>Approved orders</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div id="chart-ap-orw-USA" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div id="chart-ap-orw-EU" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div id="chart-ap-orw-UK_CA_OCE" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div id="chart-ap-orw-LATAM" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div id="chart-ap-orw-Other" class="chart-wrap"></div></div>
+</section>
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate by Region · Monthly</span><div class="meta"><div><span class="label">Period</span><span id="p-ap-orm">—</span></div></div></div>
+  <div class="section-legend"><div class="legend-item"><span class="swatch total"></span>Total orders</div><div class="legend-item"><span class="swatch approved"></span>Approved orders</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div id="chart-ap-orm-USA" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div id="chart-ap-orm-EU" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div id="chart-ap-orm-UK_CA_OCE" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div id="chart-ap-orm-LATAM" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div id="chart-ap-orm-Other" class="chart-wrap"></div></div>
+</section>
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate (Users) by Region · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-ap-urw">—</span></div></div></div>
+  <div class="section-legend"><div class="legend-item"><span class="swatch total"></span>Total users</div><div class="legend-item"><span class="swatch approved"></span>Approved users</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div id="chart-ap-urw-USA" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div id="chart-ap-urw-EU" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div id="chart-ap-urw-UK_CA_OCE" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div id="chart-ap-urw-LATAM" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div id="chart-ap-urw-Other" class="chart-wrap"></div></div>
+</section>
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate (Users) by Region · Monthly</span><div class="meta"><div><span class="label">Period</span><span id="p-ap-urm">—</span></div></div></div>
+  <div class="section-legend"><div class="legend-item"><span class="swatch total"></span>Total users</div><div class="legend-item"><span class="swatch approved"></span>Approved users</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div id="chart-ap-urm-USA" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div id="chart-ap-urm-EU" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div id="chart-ap-urm-UK_CA_OCE" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div id="chart-ap-urm-LATAM" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div id="chart-ap-urm-Other" class="chart-wrap"></div></div>
+</section>
+
+<!-- S23 Apple Pay · Type AR (Pattern A) -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Card Type · Approval Rate by Region · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-ap-type-ar">—</span></div></div></div>
+  <div class="section-legend"><div class="legend-item"><span class="swatch total"></span>Total txns</div><div class="legend-item"><span class="swatch approved"></span>Approved txns</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div id="chart-ap-type-ar-USA" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div id="chart-ap-type-ar-EU" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div id="chart-ap-type-ar-UK_CA_OCE" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div id="chart-ap-type-ar-LATAM" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div id="chart-ap-type-ar-Other" class="chart-wrap"></div></div>
+</section>
+
+<!-- S24 Apple Pay · Type Share (Pattern E) -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Card Type · Share &amp; AR Trend by Region · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-ap-type-share">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch-sq" style="background:#1f4e5f"></span>Debit</div><div class="legend-item"><span class="swatch-sq" style="background:#6b8f71"></span>Credit</div><div class="legend-item"><span class="swatch-sq" style="background:#a0926e"></span>Prepaid</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div class="chart-row"><div class="chart-col"><div class="col-label">Share in region %</div><div id="chart-ap-type-share-USA" class="chart-wrap-half"></div></div><div class="chart-col"><div class="col-label">Approval rate %</div><div id="chart-ap-type-ar2-USA" class="chart-wrap-half"></div></div></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div class="chart-row"><div class="chart-col"><div class="col-label">Share in region %</div><div id="chart-ap-type-share-EU" class="chart-wrap-half"></div></div><div class="chart-col"><div class="col-label">Approval rate %</div><div id="chart-ap-type-ar2-EU" class="chart-wrap-half"></div></div></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div class="chart-row"><div class="chart-col"><div class="col-label">Share in region %</div><div id="chart-ap-type-share-UK_CA_OCE" class="chart-wrap-half"></div></div><div class="chart-col"><div class="col-label">Approval rate %</div><div id="chart-ap-type-ar2-UK_CA_OCE" class="chart-wrap-half"></div></div></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div class="chart-row"><div class="chart-col"><div class="col-label">Share in region %</div><div id="chart-ap-type-share-LATAM" class="chart-wrap-half"></div></div><div class="chart-col"><div class="col-label">Approval rate %</div><div id="chart-ap-type-ar2-LATAM" class="chart-wrap-half"></div></div></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div class="chart-row"><div class="chart-col"><div class="col-label">Share in region %</div><div id="chart-ap-type-share-Other" class="chart-wrap-half"></div></div><div class="chart-col"><div class="col-label">Approval rate %</div><div id="chart-ap-type-ar2-Other" class="chart-wrap-half"></div></div></div></div>
+</section>
+
+<!-- S25 Apple Pay · Banks Top-15 -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Top-15 Issuer Banks · Apple Pay · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-ap-banks">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch-sq" style="background:var(--green-bg);border:1px solid var(--green-ink)"></span>AR ≥ +5pp WoW</div><div class="legend-item"><span class="swatch-sq" style="background:var(--red-bg);border:1px solid var(--red-ink)"></span>AR ≤ −5pp WoW</div></div>
+  <div class="table-wrap"><table><thead><tr class="row-weeks" id="thead-ap-banks-weeks"></tr><tr class="row-sub" id="thead-ap-banks-sub"></tr></thead><tbody id="tbody-ap-banks"></tbody></table></div>
+</section>
+
+<!-- S26 Apple Pay · Banks WoW -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Bank WoW Growth · Apple Pay</span><div class="meta"><div><span class="label">Scope</span><span>USA · top-20 by pct growth</span></div></div></div>
+  <div class="legend" style="flex-wrap:wrap;gap:12px;"><span class="seg-tag tag-gi">↑ growing · improving</span><span class="seg-tag tag-gd">↑ growing · declining</span><span class="seg-tag tag-gs">↑ growing · stable</span><span class="seg-tag tag-si">↓ shrinking · improving</span><span class="seg-tag tag-sd">↓ shrinking · declining</span><span class="seg-tag tag-ss">↓ shrinking · stable</span></div>
+  <div class="table-wrap"><table><thead><tr class="row-groups"><th class="th-bank">Issuer Bank</th><th class="th-group" colspan="2">Prev Week</th><th class="th-group" colspan="2">Last Week</th><th class="th-group" colspan="2">Growth</th><th class="th-group" colspan="2">AR Delta</th><th class="th-group">Segment</th></tr><tr class="row-groups-sub"><th class="th-bank-sub"></th><th class="th-first-sub">Txns</th><th>AR%</th><th class="th-first-sub">Txns</th><th>AR%</th><th class="th-first-sub">Abs</th><th>Pct%</th><th class="th-first-sub">pp</th><th>direction</th><th class="th-first-sub"></th></tr></thead><tbody id="tbody-ap-banks-wow"></tbody></table></div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ PAYPAL -->
+<div class="pm-separator"><span class="pm-name">PayPal</span><span class="pm-sub">source = enriched_apm_orders</span></div>
+
+<!-- S27-30: PayPal General AR -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-pp-ow">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch total"></span>Total orders</div><div class="legend-item"><span class="swatch approved"></span>Approved orders</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div id="chart-pp-ow" class="chart-wrap"></div>
+</section>
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate · Monthly</span><div class="meta"><div><span class="label">Period</span><span id="p-pp-om">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch total"></span>Total orders</div><div class="legend-item"><span class="swatch approved"></span>Approved orders</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div id="chart-pp-om" class="chart-wrap"></div>
+</section>
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate (Users) · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-pp-uw">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch total"></span>Total users</div><div class="legend-item"><span class="swatch approved"></span>Approved users</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div id="chart-pp-uw" class="chart-wrap"></div>
+</section>
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate (Users) · Monthly</span><div class="meta"><div><span class="label">Period</span><span id="p-pp-um">—</span></div></div></div>
+  <div class="legend"><div class="legend-item"><span class="swatch total"></span>Total users</div><div class="legend-item"><span class="swatch approved"></span>Approved users</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div id="chart-pp-um" class="chart-wrap"></div>
+</section>
+
+<!-- S31-34: PayPal by Region -->
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate by Region · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-pp-orw">—</span></div></div></div>
+  <div class="section-legend"><div class="legend-item"><span class="swatch total"></span>Total orders</div><div class="legend-item"><span class="swatch approved"></span>Approved orders</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div id="chart-pp-orw-USA" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div id="chart-pp-orw-EU" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div id="chart-pp-orw-UK_CA_OCE" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div id="chart-pp-orw-LATAM" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div id="chart-pp-orw-Other" class="chart-wrap"></div></div>
+</section>
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate by Region · Monthly</span><div class="meta"><div><span class="label">Period</span><span id="p-pp-orm">—</span></div></div></div>
+  <div class="section-legend"><div class="legend-item"><span class="swatch total"></span>Total orders</div><div class="legend-item"><span class="swatch approved"></span>Approved orders</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div id="chart-pp-orm-USA" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div id="chart-pp-orm-EU" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div id="chart-pp-orm-UK_CA_OCE" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div id="chart-pp-orm-LATAM" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div id="chart-pp-orm-Other" class="chart-wrap"></div></div>
+</section>
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate (Users) by Region · Weekly</span><div class="meta"><div><span class="label">Period</span><span id="p-pp-urw">—</span></div></div></div>
+  <div class="section-legend"><div class="legend-item"><span class="swatch total"></span>Total users</div><div class="legend-item"><span class="swatch approved"></span>Approved users</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div id="chart-pp-urw-USA" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div id="chart-pp-urw-EU" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div id="chart-pp-urw-UK_CA_OCE" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div id="chart-pp-urw-LATAM" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div id="chart-pp-urw-Other" class="chart-wrap"></div></div>
+</section>
+<section class="report-section">
+  <div class="section-header"><span class="title">Payment Acceptance Rate (Users) by Region · Monthly</span><div class="meta"><div><span class="label">Period</span><span id="p-pp-urm">—</span></div></div></div>
+  <div class="section-legend"><div class="legend-item"><span class="swatch total"></span>Total users</div><div class="legend-item"><span class="swatch approved"></span>Approved users</div><div class="legend-item"><span class="swatch-line"></span>Approval rate</div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">United States</span></div><div id="chart-pp-urm-USA" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Europe</span></div><div id="chart-pp-urm-EU" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">UK · Canada · Oceania</span></div><div id="chart-pp-urm-UK_CA_OCE" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Latin America</span></div><div id="chart-pp-urm-LATAM" class="chart-wrap"></div></div>
+  <div class="region-block"><div class="region-header"><span class="region-label">Other</span></div><div id="chart-pp-urm-Other" class="chart-wrap"></div></div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>SOURCE · solid_raw.enriched_orders · enriched_apm_orders</div>
+  <div id="generated-at">—</div>
+</footer>
+
+</div><!-- /container -->
+<script>
+const REPORT_META = { product: "mydrama", channel: "card · prod" };
+
+/* =========================================================================
+   DATA INJECTION POINTS — n8n replaces each variable independently
+   ========================================================================= */
+
+// Cards · General
+const rawDataOrdersWeekly = [];
+const rawDataOrdersMonthly = [];
+const rawDataUsersWeekly = [];
+const rawDataUsersMonthly = [];
+
+// Cards · by Region
+const rawDataOrdersRegionWeekly = [];
+const rawDataOrdersRegionMonthly = [];
+const rawDataUsersRegionWeekly = [];
+const rawDataUsersRegionMonthly = [];
+
+// Cards · Metadata
+const rawDataCardBrandWeekly = [];
+const rawDataCardTypeWeekly = [];
+
+// Cards · Banks
+const rawDataCardBanksTop15 = [];
+const rawDataCardBanksWoW = [];
+
+// Apple Pay · General
+const rawDataApOrdersWeekly = [];
+const rawDataApOrdersMonthly = [];
+const rawDataApUsersWeekly = [];
+const rawDataApUsersMonthly = [];
+
+// Apple Pay · by Region
+const rawDataApOrdersRegionWeekly = [];
+const rawDataApOrdersRegionMonthly = [];
+const rawDataApUsersRegionWeekly = [];
+const rawDataApUsersRegionMonthly = [];
+
+// Apple Pay · Metadata + Banks
+const rawDataApCardTypeWeekly = [];
+const rawDataApBanksTop15 = [];
+const rawDataApBanksWoW = [];
+
+// PayPal · General
+const rawDataPpOrdersWeekly = [];
+const rawDataPpOrdersMonthly = [];
+const rawDataPpUsersWeekly = [];
+const rawDataPpUsersMonthly = [];
+
+// PayPal · by Region
+const rawDataPpOrdersRegionWeekly = [];
+const rawDataPpOrdersRegionMonthly = [];
+const rawDataPpUsersRegionWeekly = [];
+const rawDataPpUsersRegionMonthly = [];
+
+/* =========================================================================
+   CONSTANTS & HELPERS
+   ========================================================================= */
+const CATEGORIES     = ["initial","upsell_initial","rebill","onetime_upsell"];
+const CATEGORY_LABELS = { initial:"Initial", upsell_initial:"Upsell initial", rebill:"Rebill", onetime_upsell:"Onetime upsell" };
+const BRANDS         = ["visa","mastercard","amex","discover"];
+const BRAND_LABELS   = { visa:"Visa", mastercard:"Mastercard", amex:"Amex", discover:"Discover" };
+const TYPES          = ["debit","credit","prepaid"];
+const TYPE_LABELS    = { debit:"Debit", credit:"Credit", prepaid:"Prepaid" };
+const REGIONS        = ["USA","EU","UK_CA_OCE","LATAM","Other"];
+const SHARE_COLORS   = { visa:"#1f4e5f", mastercard:"#6b8f71", amex:"#a0926e", discover:"#7a6a8a", debit:"#1f4e5f", credit:"#6b8f71", prepaid:"#a0926e" };
+
+const C = { barTotal:"#e8a888", barTotalBorder:"#c97b4f", barApproved:"#c97b4f", barApprovedBorder:"#a4623e", line:"#1f4e5f", ink:"#1a1a1a", inkSoft:"#4a4a4a", inkMuted:"#8a8a8a", rule:"#ece5d6", surface:"#fbf8f1" };
+
+function niceCeil(v) {
+  if (v<=0) return 1;
+  const e=Math.floor(Math.log10(v)), f=Math.pow(10,e), n=v/f;
+  for (const b of [1,1.2,1.4,1.5,1.6,1.8,2,2.5,3,3.5,4,4.5,5,6,7,7.5,8,9,10]) if(n<=b) return b*f;
+  return 10*f;
+}
+const fmtK = v => v>=1e6?(v/1e6).toFixed(1).replace(/\.0$/,"")+"M":v>=1e3?(v/1e3).toFixed(0)+"K":String(v);
+const fmtWS  = iso => new Date(iso).toLocaleDateString("en-US",{month:"short",day:"numeric"});
+const fmtWL  = iso => new Date(iso).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+const fmtMS  = iso => { const d=new Date(iso); return d.toLocaleDateString("en-US",{month:"short"})+" '"+String(d.getFullYear()).slice(2); };
+const fmtML  = iso => new Date(iso).toLocaleDateString("en-US",{month:"long",year:"numeric"});
+
+/* =========================================================================
+   PATTERN A — buildChart (supports custom dimensions via config)
+   ========================================================================= */
+function buildChart(elId, rawData, periodElId, config) {
+  const el = document.getElementById(elId);
+  if (!el || !rawData || !rawData.length) return null;
+
+  const { dateKey, totalKey, approvedKey, arKey, barWidth, fmtShort, fmtLong,
+          dimensions: dims = CATEGORIES,
+          dimensionLabels: dimLabels = CATEGORY_LABELS,
+          dimensionKey: dimKey = "category" } = config;
+
+  const periods = [...new Set(rawData.map(r=>r[dateKey]))].sort();
+  const lookup  = new Map(rawData.map(r=>[`${r[dateKey]}|${r[dimKey]}`,r]));
+
+  const byDim = {};
+  dims.forEach(d => {
+    byDim[d] = {
+      total:    periods.map(p=>{ const r=lookup.get(`${p}|${d}`); return r?parseInt(r[totalKey],10):0; }),
+      approved: periods.map(p=>{ const r=lookup.get(`${p}|${d}`); return r?parseInt(r[approvedKey],10):0; }),
+      ar_pct:   periods.map(p=>{ const r=lookup.get(`${p}|${d}`); return r?parseFloat(r[arKey]):0; })
+    };
+  });
+
+  if (periods.length && periodElId) {
+    const pe = document.getElementById(periodElId);
+    if (pe) pe.textContent = `${fmtShort(periods[0])} → ${fmtShort(periods[periods.length-1])}`;
+  }
+
+  const chart = echarts.init(el, null, {renderer:"canvas"});
+  const N=dims.length, TOP=4, BOT=3, GAP=5.5;
+  const RH=(100-TOP-BOT-GAP*(N-1))/N;
+  const grids=[],xAxes=[],yAxes=[],series=[],graphics=[];
+
+  dims.forEach((d,i) => {
+    const top=TOP+i*(RH+GAP);
+    const cMax=niceCeil(Math.max(...byDim[d].total)*1.2);
+    grids.push({left:130,right:90,top:`${top}%`,height:`${RH}%`,containLabel:false});
+    xAxes.push({type:"category",data:periods.map(fmtShort),gridIndex:i,boundaryGap:true,axisLine:{lineStyle:{color:"#cdc6b8",width:1}},axisTick:{show:false},axisLabel:{fontFamily:"JetBrains Mono,monospace",fontSize:10,color:C.inkSoft,margin:10},splitLine:{show:false}});
+    yAxes.push({type:"value",gridIndex:i,min:0,max:100,interval:25,axisLine:{show:false},axisTick:{show:false},axisLabel:{formatter:"{value}%",fontFamily:"JetBrains Mono,monospace",fontSize:10,color:C.inkMuted,margin:10},splitLine:{lineStyle:{color:C.rule,type:[4,4],width:1}}});
+    yAxes.push({type:"value",gridIndex:i,min:0,max:cMax,interval:cMax/4,position:"right",axisLine:{show:false},axisTick:{show:false},axisLabel:{formatter:v=>v===0?"":fmtK(v),fontFamily:"JetBrains Mono,monospace",fontSize:10,color:C.inkMuted,margin:10},splitLine:{show:false}});
+    series.push({name:config.labelTotal||"Total",type:"bar",xAxisIndex:i,yAxisIndex:i*2+1,data:byDim[d].total,barWidth,barGap:"20%",itemStyle:{color:C.barTotal,borderColor:C.barTotalBorder,borderWidth:0.5},label:{show:true,position:"top",formatter:p=>p.value.toLocaleString("en-US"),fontFamily:"JetBrains Mono,monospace",fontSize:9,color:C.ink,distance:4},z:5});
+    series.push({name:config.labelApproved||"Approved",type:"bar",xAxisIndex:i,yAxisIndex:i*2+1,data:byDim[d].approved,barWidth,itemStyle:{color:C.barApproved,borderColor:C.barApprovedBorder,borderWidth:0.5},label:{show:true,position:"top",formatter:p=>p.value.toLocaleString("en-US"),fontFamily:"JetBrains Mono,monospace",fontSize:9,color:"#fff",backgroundColor:C.barApproved,padding:[2,4],borderRadius:1,distance:4},z:6});
+    series.push({name:"Approval rate",type:"line",xAxisIndex:i,yAxisIndex:i*2,data:byDim[d].ar_pct,smooth:false,symbol:"circle",symbolSize:7,lineStyle:{color:C.line,width:2},itemStyle:{color:C.line,borderColor:C.surface,borderWidth:1.5},label:{show:true,position:"top",formatter:p=>p.value.toFixed(2)+"%",fontFamily:"JetBrains Mono,monospace",fontSize:11,fontWeight:500,color:C.ink,backgroundColor:C.surface,padding:[3,5],borderRadius:2,distance:8},z:10,emphasis:{focus:"series"}});
+    graphics.push({type:"text",left:24,top:`${top+RH/2-1.4}%`,style:{text:dimLabels[d]||d,font:"500 14px Fraunces,serif",fill:C.ink}});
+  });
+
+  chart.setOption({
+    backgroundColor:"transparent",animationDuration:600,animationEasing:"cubicOut",
+    grid:grids,xAxis:xAxes,yAxis:yAxes,series,graphic:graphics,
+    axisPointer:{link:[{xAxisIndex:"all"}],lineStyle:{color:"#bdb6a3",type:"dashed"}},
+    tooltip:{trigger:"axis",axisPointer:{type:"line"},backgroundColor:C.ink,borderWidth:0,padding:[10,14],textStyle:{color:"#f5f1e8",fontFamily:"JetBrains Mono,monospace",fontSize:11,lineHeight:18},
+      formatter:params=>{
+        if(!params||!params.length) return "";
+        const idx=params[0].dataIndex;
+        let html=`<div style="font-family:Fraunces,serif;font-size:13px;font-weight:500;margin-bottom:8px;color:#fff">${fmtLong(periods[idx])}</div>`;
+        dims.forEach(d=>{
+          html+=`<div style="display:flex;justify-content:space-between;gap:24px;margin:3px 0"><span style="color:#a8a195">${dimLabels[d]||d}</span><span><span style="color:#e8a888">${byDim[d].total[idx].toLocaleString()}</span><span style="color:#6a6359;margin:0 3px">/</span><span style="color:#c97b4f">${byDim[d].approved[idx].toLocaleString()}</span><span style="color:#6a6359;margin:0 4px">·</span><span style="color:#7eb3c4">${byDim[d].ar_pct[idx].toFixed(2)}%</span></span></div>`;
+        });
+        return html;
+      }}
+  });
+  return chart;
+}
+
+/* =========================================================================
+   PATTERN A + REGION — buildRegionCharts
+   ========================================================================= */
+function buildRegionCharts(rawData, prefix, sectionPeriodElId, config) {
+  if (!rawData || !rawData.length) return [];
+  let set=false; const charts=[];
+  REGIONS.forEach(region=>{
+    const filtered=rawData.filter(r=>r.region===region);
+    const c=buildChart(`chart-${prefix}-${region}`, filtered, `p-${prefix}-${region}`, config);
+    if (c) {
+      charts.push(c);
+      if (!set && sectionPeriodElId) {
+        const periods=[...new Set(filtered.map(r=>r[config.dateKey]))].sort();
+        if (periods.length) { const el=document.getElementById(sectionPeriodElId); if(el) el.textContent=`${config.fmtShort(periods[0])} → ${config.fmtShort(periods[periods.length-1])}`; set=true; }
+      }
+    }
+  });
+  return charts;
+}
+
+/* =========================================================================
+   PATTERN E — buildShareCharts (stacked share + multiline AR per region)
+   ========================================================================= */
+function buildShareCharts(rawData, prefix, dimensionKey, dims, periodElId) {
+  if (!rawData || !rawData.length) return [];
+  const charts = [];
+  const periods = [...new Set(rawData.map(r=>r.week_start))].sort();
+
+  if (periods.length && periodElId) {
+    const el = document.getElementById(periodElId);
+    if (el) el.textContent = `${fmtWS(periods[0])} → ${fmtWS(periods[periods.length-1])}`;
+  }
+
+  REGIONS.forEach(region => {
+    const regionData = rawData.filter(r=>r.region===region);
+    if (!regionData.length) return;
+
+    const lookup = {};
+    regionData.forEach(r=>{ if(!lookup[r.week_start])lookup[r.week_start]={}; lookup[r.week_start][r[dimensionKey]]=r; });
+    const pLabels = periods.map(fmtWS);
+
+    // Share chart
+    const shareEl = document.getElementById(`chart-${prefix}-share-${region}`);
+    if (shareEl) {
+      const sc = echarts.init(shareEl,null,{renderer:"canvas"});
+      sc.setOption({
+        backgroundColor:"transparent",animationDuration:500,
+        grid:{left:16,right:16,top:16,bottom:40,containLabel:true},
+        xAxis:{type:"category",data:pLabels,axisLine:{lineStyle:{color:"#cdc6b8"}},axisTick:{show:false},axisLabel:{fontFamily:"JetBrains Mono,monospace",fontSize:10,color:C.inkSoft}},
+        yAxis:{type:"value",min:0,max:100,axisLine:{show:false},axisTick:{show:false},axisLabel:{formatter:"{value}%",fontFamily:"JetBrains Mono,monospace",fontSize:10,color:C.inkMuted},splitLine:{lineStyle:{color:C.rule,type:[4,4]}}},
+        tooltip:{trigger:"axis",axisPointer:{type:"shadow"},backgroundColor:C.ink,borderWidth:0,padding:[8,12],textStyle:{color:"#f5f1e8",fontFamily:"JetBrains Mono,monospace",fontSize:11},
+          formatter:params=>{
+            const pIso=periods[params[0].dataIndex];
+            let h=`<div style="font-family:Fraunces,serif;font-size:12px;margin-bottom:6px;color:#fff">${params[0].axisValue}</div>`;
+            params.forEach(p=>{const r=lookup[pIso]?.[p.seriesName];const t=r?parseInt(r.total_txns).toLocaleString("en-US"):"—";h+=`<div style="display:flex;justify-content:space-between;gap:20px;margin:2px 0"><span style="color:#a8a195">${p.seriesName}</span><span><span style="color:#e8d8c4">${p.value.toFixed(1)}%</span><span style="color:#6a6359;margin-left:8px">${t}</span></span></div>`;});
+            return h;
+          }},
+        series:dims.map(d=>({name:d,type:"bar",stack:"share",barMaxWidth:40,itemStyle:{color:SHARE_COLORS[d]||"#999"},label:{show:true,formatter:p=>p.value>5?p.value.toFixed(1)+"%":"",fontFamily:"JetBrains Mono,monospace",fontSize:10,color:"#fff"},data:periods.map(p=>{ const r=lookup[p]?.[d]; return r?parseFloat(r.share_in_region_pct):0; })}))
+      });
+      charts.push(sc);
+    }
+
+    // AR multiline chart
+    const arEl = document.getElementById(`chart-${prefix}-ar2-${region}`);
+    if (arEl) {
+      const ac = echarts.init(arEl,null,{renderer:"canvas"});
+      ac.setOption({
+        backgroundColor:"transparent",animationDuration:500,
+        grid:{left:16,right:16,top:24,bottom:40,containLabel:true},
+        xAxis:{type:"category",data:pLabels,axisLine:{lineStyle:{color:"#cdc6b8"}},axisTick:{show:false},axisLabel:{fontFamily:"JetBrains Mono,monospace",fontSize:10,color:C.inkSoft}},
+        yAxis:{type:"value",min:0,max:100,interval:25,axisLine:{show:false},axisTick:{show:false},axisLabel:{formatter:"{value}%",fontFamily:"JetBrains Mono,monospace",fontSize:10,color:C.inkMuted},splitLine:{lineStyle:{color:C.rule,type:[4,4]}}},
+        tooltip:{trigger:"axis",backgroundColor:C.ink,borderWidth:0,padding:[8,12],textStyle:{color:"#f5f1e8",fontFamily:"JetBrains Mono,monospace",fontSize:11},
+          formatter:params=>{
+            const pIso=periods[params[0].dataIndex];
+            let h=`<div style="font-family:Fraunces,serif;font-size:12px;margin-bottom:6px;color:#fff">${params[0].axisValue}</div>`;
+            params.forEach(p=>{if(p.value!==null){const r=lookup[pIso]?.[p.seriesName];const t=r?parseInt(r.total_txns).toLocaleString("en-US"):"—";h+=`<div style="display:flex;justify-content:space-between;gap:20px;margin:2px 0"><span style="color:#a8a195">${p.seriesName}</span><span><span style="color:#e8d8c4">${p.value.toFixed(1)}%</span><span style="color:#6a6359;margin-left:8px">${t}</span></span></div>`;}});
+            return h;
+          }},
+        series:dims.map(d=>({name:d,type:"line",smooth:false,symbol:"circle",symbolSize:6,lineStyle:{color:SHARE_COLORS[d]||"#999",width:2},itemStyle:{color:SHARE_COLORS[d]||"#999",borderColor:C.surface,borderWidth:1.5},label:{show:true,position:"top",formatter:p=>p.value.toFixed(1)+"%",fontFamily:"JetBrains Mono,monospace",fontSize:10,color:SHARE_COLORS[d]||"#999",backgroundColor:C.surface,padding:[2,4],borderRadius:2},data:periods.map(p=>{ const r=lookup[p]?.[d]; return r?parseFloat(r.approval_rate_pct):null; })}))
+      });
+      charts.push(ac);
+    }
+  });
+  return charts;
+}
+
+/* =========================================================================
+   PATTERN F — buildBankTable (heatmap weekly)
+   ========================================================================= */
+function buildBankTable(rawData, weeksRowId, subRowId, tbodyId, periodElId) {
+  if (!rawData || !rawData.length) return;
+  const banks  = [...new Set(rawData.map(r=>r.card_bank))];
+  const weeks  = [...new Set(rawData.map(r=>r.week_start))].sort();
+  const lookup = {};
+  rawData.forEach(r=>{ if(!lookup[r.card_bank])lookup[r.card_bank]={}; lookup[r.card_bank][r.week_start]=r; });
+
+  if (periodElId) { const el=document.getElementById(periodElId); if(el) el.textContent=`${fmtWS(weeks[0])} → ${fmtWS(weeks[weeks.length-1])}`; }
+
+  const rw=document.getElementById(weeksRowId), rs=document.getElementById(subRowId);
+  const thB=document.createElement("th"); thB.className="th-bank"; thB.textContent="Issuer Bank"; rw.appendChild(thB);
+  const thBs=document.createElement("th"); thBs.className="th-bank-sub"; rs.appendChild(thBs);
+  weeks.forEach(w=>{ const th=document.createElement("th"); th.className="th-week-group"; th.colSpan=3; th.textContent=fmtWS(w); rw.appendChild(th); ["Txns","AR%","Share%"].forEach((l,si)=>{ const t=document.createElement("th"); if(si===0)t.className="th-txns"; t.textContent=l; rs.appendChild(t); }); });
+
+  const tbody=document.getElementById(tbodyId);
+  banks.forEach((bank,idx)=>{
+    const tr=document.createElement("tr");
+    const tdB=document.createElement("td"); tdB.className="td-bank"; tdB.title=bank; tdB.innerHTML=`<span class="rank">${String(idx+1).padStart(2,"0")}</span>${bank}`; tr.appendChild(tdB);
+    weeks.forEach((week,wi)=>{
+      const row=lookup[bank]?.[week];
+      if(!row){ ["td-txns td-first","td-ar","td-share-val"].forEach(cls=>{ const td=document.createElement("td"); cls.split(" ").forEach(c=>td.classList.add(c)); td.textContent="—"; tr.appendChild(td); }); return; }
+      const ar=parseFloat(row.approval_rate_pct), txns=parseInt(row.total_txns), share=parseFloat(row.share_in_week_pct);
+      let arDelta=null;
+      if(wi>0){ const prev=lookup[bank]?.[weeks[wi-1]]; if(prev) arDelta=ar-parseFloat(prev.approval_rate_pct); }
+      const tdT=document.createElement("td"); tdT.className="td-txns td-first"; tdT.textContent=fmtK(txns); tr.appendChild(tdT);
+      const tdA=document.createElement("td"); tdA.className="td-ar"; if(arDelta!==null&&arDelta>=5)tdA.classList.add("cell-green"); if(arDelta!==null&&arDelta<=-5)tdA.classList.add("cell-red"); tdA.textContent=ar.toFixed(1)+"%"; tr.appendChild(tdA);
+      const tdS=document.createElement("td"); tdS.className="td-share-val"; tdS.textContent=share.toFixed(1)+"%"; tr.appendChild(tdS);
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+/* =========================================================================
+   PATTERN F — buildWoWTable
+   ========================================================================= */
+const SEG_CFG = { growing_improving:{cls:"tag-gi",label:"↑ growing · improving"}, growing_declining:{cls:"tag-gd",label:"↑ growing · declining"}, growing_stable:{cls:"tag-gs",label:"↑ growing · stable"}, shrinking_improving:{cls:"tag-si",label:"↓ shrinking · improving"}, shrinking_declining:{cls:"tag-sd",label:"↓ shrinking · declining"}, shrinking_stable:{cls:"tag-ss",label:"↓ shrinking · stable"} };
+
+function buildWoWTable(rawData, tbodyId) {
+  if (!rawData || !rawData.length) return;
+  const tbody=document.getElementById(tbodyId);
+  rawData.forEach((row,idx)=>{
+    const tr=document.createElement("tr");
+    const tdB=document.createElement("td"); tdB.className="td-bank"; tdB.title=row.card_bank; tdB.innerHTML=`<span class="rank">${String(idx+1).padStart(2,"0")}</span>${row.card_bank}`; tr.appendChild(tdB);
+    cell(tr,fmtK(row.prev_week_txns),"td-txns td-first");
+    cell(tr,parseFloat(row.prev_week_ar_pct).toFixed(1)+"%","td-ar");
+    cell(tr,fmtK(row.last_week_txns),"td-txns td-first");
+    cell(tr,parseFloat(row.last_week_ar_pct).toFixed(1)+"%","td-ar");
+    const ag=parseInt(row.abs_growth), pg=parseFloat(row.pct_growth);
+    cell(tr,(ag>=0?"+":"")+ag.toLocaleString(),"td-growth-abs td-first");
+    const tPct=cell(tr,(pg>=0?"+":"")+pg.toFixed(1)+"%","td-growth-pct td-first"); tPct.classList.add(pg>=0?"pos":"neg");
+    const delta=parseFloat(row.ar_delta_pp);
+    const tDelta=cell(tr,(delta>=0?"+":"")+delta.toFixed(2)+"pp","td-ar-delta td-first"); tDelta.classList.add(delta>=2?"pos":delta<=-2?"neg":"neutral");
+    const dir=delta>=2?"↑ improving":delta<=-2?"↓ declining":"→ stable";
+    const tDir=cell(tr,dir,"td-ar-delta"); tDir.classList.add(delta>=2?"pos":delta<=-2?"neg":"neutral");
+    const tSeg=document.createElement("td"); tSeg.className="td-segment td-first"; const seg=SEG_CFG[row.segment]||{cls:"tag-ss",label:row.segment}; tSeg.innerHTML=`<span class="tag ${seg.cls}">${seg.label}</span>`; tr.appendChild(tSeg);
+    tbody.appendChild(tr);
+  });
+}
+function cell(tr,text,cls){ const td=document.createElement("td"); cls.split(" ").forEach(c=>td.classList.add(c)); td.textContent=text; tr.appendChild(td); return td; }
+
+/* =========================================================================
+   PAGE INIT
+   ========================================================================= */
+document.getElementById("hdr-product").textContent = REPORT_META.product;
+document.getElementById("hdr-channel").textContent = REPORT_META.channel;
+document.getElementById("generated-at").textContent = "GENERATED · " + new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}).toUpperCase();
+
+const allCharts = [];
+const push = c => { if(c) allCharts.push(c); };
+const pushAll = arr => arr.forEach(push);
+
+// Cards General
+push(buildChart("chart-ow", rawDataOrdersWeekly,  "p-ow", {dateKey:"week_start", totalKey:"total_orders", approvedKey:"approved_orders", arKey:"ar_pct", barWidth:14, fmtShort:fmtWS, fmtLong:fmtWL, labelTotal:"Total orders", labelApproved:"Approved orders"}));
+push(buildChart("chart-om", rawDataOrdersMonthly, "p-om", {dateKey:"month_start",totalKey:"total_orders", approvedKey:"approved_orders", arKey:"ar_pct", barWidth:20, fmtShort:fmtMS, fmtLong:fmtML, labelTotal:"Total orders", labelApproved:"Approved orders"}));
+push(buildChart("chart-uw", rawDataUsersWeekly,   "p-uw", {dateKey:"week_start", totalKey:"users_total",  approvedKey:"users_approved",  arKey:"user_ar_pct", barWidth:14, fmtShort:fmtWS, fmtLong:fmtWL, labelTotal:"Total users", labelApproved:"Approved users"}));
+push(buildChart("chart-um", rawDataUsersMonthly,  "p-um", {dateKey:"month_start",totalKey:"users_total",  approvedKey:"users_approved",  arKey:"user_ar_pct", barWidth:20, fmtShort:fmtMS, fmtLong:fmtML, labelTotal:"Total users", labelApproved:"Approved users"}));
+
+// Cards by Region
+pushAll(buildRegionCharts(rawDataOrdersRegionWeekly,  "orw", "p-orw", {dateKey:"week_start", totalKey:"total_orders",approvedKey:"approved_orders",arKey:"ar_pct",      barWidth:14,fmtShort:fmtWS,fmtLong:fmtWL,labelTotal:"Total orders", labelApproved:"Approved orders"}));
+pushAll(buildRegionCharts(rawDataOrdersRegionMonthly, "orm", "p-orm", {dateKey:"month_start",totalKey:"total_orders",approvedKey:"approved_orders",arKey:"ar_pct",      barWidth:20,fmtShort:fmtMS,fmtLong:fmtML,labelTotal:"Total orders", labelApproved:"Approved orders"}));
+pushAll(buildRegionCharts(rawDataUsersRegionWeekly,   "urw", "p-urw", {dateKey:"week_start", totalKey:"users_total", approvedKey:"users_approved", arKey:"user_ar_pct",barWidth:14,fmtShort:fmtWS,fmtLong:fmtWL,labelTotal:"Total users",  labelApproved:"Approved users"}));
+pushAll(buildRegionCharts(rawDataUsersRegionMonthly,  "urm", "p-urm", {dateKey:"month_start",totalKey:"users_total", approvedKey:"users_approved", arKey:"user_ar_pct",barWidth:20,fmtShort:fmtMS,fmtLong:fmtML,labelTotal:"Total users",  labelApproved:"Approved users"}));
+
+// Cards Metadata — Brand (Pattern A by region)
+pushAll(buildRegionCharts(rawDataCardBrandWeekly, "brand-ar", "p-brand-ar", {dateKey:"week_start",totalKey:"total_txns",approvedKey:"approved_txns",arKey:"approval_rate_pct",barWidth:14,fmtShort:fmtWS,fmtLong:fmtWL,dimensions:BRANDS,dimensionLabels:BRAND_LABELS,dimensionKey:"card_brand",labelTotal:"Total txns",labelApproved:"Approved txns"}));
+
+// Cards Metadata — Brand Share (Pattern E)
+pushAll(buildShareCharts(rawDataCardBrandWeekly, "brand", "card_brand", BRANDS, "p-brand-share"));
+
+// Cards Metadata — Type (Pattern A by region)
+pushAll(buildRegionCharts(rawDataCardTypeWeekly, "type-ar", "p-type-ar", {dateKey:"week_start",totalKey:"total_txns",approvedKey:"approved_txns",arKey:"approval_rate_pct",barWidth:14,fmtShort:fmtWS,fmtLong:fmtWL,dimensions:TYPES,dimensionLabels:TYPE_LABELS,dimensionKey:"card_type",labelTotal:"Total txns",labelApproved:"Approved txns"}));
+
+// Cards Metadata — Type Share (Pattern E)
+pushAll(buildShareCharts(rawDataCardTypeWeekly, "type", "card_type", TYPES, "p-type-share"));
+
+// Cards Banks
+buildBankTable(rawDataCardBanksTop15, "thead-banks-weeks", "thead-banks-sub", "tbody-banks", "p-banks");
+buildWoWTable(rawDataCardBanksWoW, "tbody-banks-wow");
+
+// Apple Pay General
+push(buildChart("chart-ap-ow", rawDataApOrdersWeekly,  "p-ap-ow", {dateKey:"week_start", totalKey:"total_orders",approvedKey:"approved_orders",arKey:"ar_pct",      barWidth:14,fmtShort:fmtWS,fmtLong:fmtWL,labelTotal:"Total orders",labelApproved:"Approved orders"}));
+push(buildChart("chart-ap-om", rawDataApOrdersMonthly, "p-ap-om", {dateKey:"month_start",totalKey:"total_orders",approvedKey:"approved_orders",arKey:"ar_pct",      barWidth:20,fmtShort:fmtMS,fmtLong:fmtML,labelTotal:"Total orders",labelApproved:"Approved orders"}));
+push(buildChart("chart-ap-uw", rawDataApUsersWeekly,   "p-ap-uw", {dateKey:"week_start", totalKey:"users_total", approvedKey:"users_approved", arKey:"user_ar_pct",barWidth:14,fmtShort:fmtWS,fmtLong:fmtWL,labelTotal:"Total users", labelApproved:"Approved users"}));
+push(buildChart("chart-ap-um", rawDataApUsersMonthly,  "p-ap-um", {dateKey:"month_start",totalKey:"users_total", approvedKey:"users_approved", arKey:"user_ar_pct",barWidth:20,fmtShort:fmtMS,fmtLong:fmtML,labelTotal:"Total users", labelApproved:"Approved users"}));
+
+// Apple Pay by Region
+pushAll(buildRegionCharts(rawDataApOrdersRegionWeekly,  "ap-orw", "p-ap-orw", {dateKey:"week_start", totalKey:"total_orders",approvedKey:"approved_orders",arKey:"ar_pct",      barWidth:14,fmtShort:fmtWS,fmtLong:fmtWL,labelTotal:"Total orders",labelApproved:"Approved orders"}));
+pushAll(buildRegionCharts(rawDataApOrdersRegionMonthly, "ap-orm", "p-ap-orm", {dateKey:"month_start",totalKey:"total_orders",approvedKey:"approved_orders",arKey:"ar_pct",      barWidth:20,fmtShort:fmtMS,fmtLong:fmtML,labelTotal:"Total orders",labelApproved:"Approved orders"}));
+pushAll(buildRegionCharts(rawDataApUsersRegionWeekly,   "ap-urw", "p-ap-urw", {dateKey:"week_start", totalKey:"users_total", approvedKey:"users_approved", arKey:"user_ar_pct",barWidth:14,fmtShort:fmtWS,fmtLong:fmtWL,labelTotal:"Total users", labelApproved:"Approved users"}));
+pushAll(buildRegionCharts(rawDataApUsersRegionMonthly,  "ap-urm", "p-ap-urm", {dateKey:"month_start",totalKey:"users_total", approvedKey:"users_approved", arKey:"user_ar_pct",barWidth:20,fmtShort:fmtMS,fmtLong:fmtML,labelTotal:"Total users", labelApproved:"Approved users"}));
+
+// Apple Pay Type
+pushAll(buildRegionCharts(rawDataApCardTypeWeekly, "ap-type-ar", "p-ap-type-ar", {dateKey:"week_start",totalKey:"total_txns",approvedKey:"approved_txns",arKey:"approval_rate_pct",barWidth:14,fmtShort:fmtWS,fmtLong:fmtWL,dimensions:TYPES,dimensionLabels:TYPE_LABELS,dimensionKey:"card_type",labelTotal:"Total txns",labelApproved:"Approved txns"}));
+pushAll(buildShareCharts(rawDataApCardTypeWeekly, "ap-type", "card_type", TYPES, "p-ap-type-share"));
+
+// Apple Pay Banks
+buildBankTable(rawDataApBanksTop15, "thead-ap-banks-weeks", "thead-ap-banks-sub", "tbody-ap-banks", "p-ap-banks");
+buildWoWTable(rawDataApBanksWoW, "tbody-ap-banks-wow");
+
+// PayPal General
+push(buildChart("chart-pp-ow", rawDataPpOrdersWeekly,  "p-pp-ow", {dateKey:"week_start", totalKey:"total_orders",approvedKey:"approved_orders",arKey:"ar_pct",      barWidth:14,fmtShort:fmtWS,fmtLong:fmtWL,labelTotal:"Total orders",labelApproved:"Approved orders"}));
+push(buildChart("chart-pp-om", rawDataPpOrdersMonthly, "p-pp-om", {dateKey:"month_start",totalKey:"total_orders",approvedKey:"approved_orders",arKey:"ar_pct",      barWidth:20,fmtShort:fmtMS,fmtLong:fmtML,labelTotal:"Total orders",labelApproved:"Approved orders"}));
+push(buildChart("chart-pp-uw", rawDataPpUsersWeekly,   "p-pp-uw", {dateKey:"week_start", totalKey:"users_total", approvedKey:"users_approved", arKey:"user_ar_pct",barWidth:14,fmtShort:fmtWS,fmtLong:fmtWL,labelTotal:"Total users", labelApproved:"Approved users"}));
+push(buildChart("chart-pp-um", rawDataPpUsersMonthly,  "p-pp-um", {dateKey:"month_start",totalKey:"users_total", approvedKey:"users_approved", arKey:"user_ar_pct",barWidth:20,fmtShort:fmtMS,fmtLong:fmtML,labelTotal:"Total users", labelApproved:"Approved users"}));
+
+// PayPal by Region
+pushAll(buildRegionCharts(rawDataPpOrdersRegionWeekly,  "pp-orw", "p-pp-orw", {dateKey:"week_start", totalKey:"total_orders",approvedKey:"approved_orders",arKey:"ar_pct",      barWidth:14,fmtShort:fmtWS,fmtLong:fmtWL,labelTotal:"Total orders",labelApproved:"Approved orders"}));
+pushAll(buildRegionCharts(rawDataPpOrdersRegionMonthly, "pp-orm", "p-pp-orm", {dateKey:"month_start",totalKey:"total_orders",approvedKey:"approved_orders",arKey:"ar_pct",      barWidth:20,fmtShort:fmtMS,fmtLong:fmtML,labelTotal:"Total orders",labelApproved:"Approved orders"}));
+pushAll(buildRegionCharts(rawDataPpUsersRegionWeekly,   "pp-urw", "p-pp-urw", {dateKey:"week_start", totalKey:"users_total", approvedKey:"users_approved", arKey:"user_ar_pct",barWidth:14,fmtShort:fmtWS,fmtLong:fmtWL,labelTotal:"Total users", labelApproved:"Approved users"}));
+pushAll(buildRegionCharts(rawDataPpUsersRegionMonthly,  "pp-urm", "p-pp-urm", {dateKey:"month_start",totalKey:"users_total", approvedKey:"users_approved", arKey:"user_ar_pct",barWidth:20,fmtShort:fmtMS,fmtLong:fmtML,labelTotal:"Total users", labelApproved:"Approved users"}));
+
+window.addEventListener("resize", ()=>allCharts.forEach(c=>c&&c.resize()));
+</script>
+</body>
+</html>
